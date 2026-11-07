@@ -25,9 +25,13 @@ void setup() {
   }
 
   setLeft(0, CENTER);
+  delay(300);
   setLeft(1, OPEN_ANGLE);
+  delay(300);
   setRight(0, CENTER);
+  delay(300);
   setRight(1, OPEN_ANGLE);
+  delay(300);
 }
 
 void loop() {

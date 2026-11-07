@@ -1,21 +1,13 @@
-from camera import scan_face
-from pc.solver import solve_cube
+import sys
+from PyQt5.QtWidgets import QApplication
+from ui import MainWindow
 
-faces = ["U", "R", "F", "D", "L", "B"]
+def main():
+    app = QApplication(sys.argv)
+    app.setApplicationName("Rubik Cube Solver")
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec_())
 
-cube = {}
-
-for face in faces:
-
-    print(f"Покажите сторону {face} и нажмите Space в окне камеры")
-
-    colors = scan_face()
-
-    cube[face] = colors
-    print(face, "считано")
-
-print("Решение:")
-
-solution = solve_cube(cube)
-
-print(solution)
+if __name__ == "__main__":
+    main()
