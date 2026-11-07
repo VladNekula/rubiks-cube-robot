@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-def detect_color(h, s, v):
+def detect_color(h, s, v): #оттенок, насыщенность, яркость
 
     if v < 50:
         return "B"
@@ -28,7 +28,7 @@ def detect_color(h, s, v):
 
 def scan_face(cam_index=0, face_name="U"):
     cap = cv2.VideoCapture(cam_index)
-    print(f"[INFO] Покажите сторону {face_name}")
+    print(f"Покажите сторону {face_name}")
 
     while True:
         ret, frame = cap.read()
@@ -91,5 +91,5 @@ def scan_cube():
             print("Скан отменён")
             return None
         cube[face] = result
-        print(f"[OK] {face} считан")
+        print(f"{face} считан")
     return cube

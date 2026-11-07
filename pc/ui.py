@@ -1,3 +1,5 @@
+import serial
+import time
 from PyQt5.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -111,6 +113,9 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        self.esp = serial.Serial("COM5", 115200, timeout=2)
+        time.sleep(2)
+        self.esp.reset_input_buffer()
         self.setWindowTitle("Rubik Cube Solver")
         self.resize(1400, 800)
         self.seconds = 0
@@ -259,6 +264,11 @@ class MainWindow(QMainWindow):
 
         solution = solve_cube(cube)
         self.moveLabel.setText(solution)
+        if not solution.startswith("Ошибка:"):
+            self.esp.write((solution + "\n").encode("utf-8"))
+            self.esp.flush()
+            print(self.esp.readline().decode("utf-8").strip(), end = ' ')
+            print(self.esp.readline().decode("utf-8").strip())
         self.statusLabel.setText("Готово")
 
     def scramble(self):
@@ -276,6 +286,8 @@ class MainWindow(QMainWindow):
         result = " ".join(sequence)
 
         self.scrambleLabel.setText("Scramble: " + result)
+        self.esp.write((result + "\n").encode("utf-8"))
+        self.esp.flush()
         self.statusLabel.setText("Scramble готов")
 
     def resetCube(self):

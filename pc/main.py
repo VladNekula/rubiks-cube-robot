@@ -1,5 +1,5 @@
 from camera import scan_face
-from solver import solve_cube
+from pc.solver import solve_cube
 
 faces = ["U", "R", "F", "D", "L", "B"]
 

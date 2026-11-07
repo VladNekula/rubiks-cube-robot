@@ -37,7 +37,7 @@ def scan_face():
         if not ret:
             break
 
-        #frame = cv2.flip(frame, 1)
+        #frame = cv2.flip(frame, 1)   это зеркалит
 
         h, w, _ = frame.shape
 
