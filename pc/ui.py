@@ -1,5 +1,7 @@
 import serial
 import time
+import random
+
 from PyQt5.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -10,13 +12,11 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
 )
 
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QColor
+from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal
 
 from scan import scan_cube
 from solv import solve_cube
 
-import random
 
 class ColorSquare(QPushButton):
 
@@ -38,7 +38,8 @@ class ColorSquare(QPushButton):
             QPushButton {
                 border: 1px solid black;
                 margin: 0px;
-                padding: 0px;}
+                padding: 0px;
+            }
         """)
 
         self.index = 0
@@ -51,9 +52,9 @@ class ColorSquare(QPushButton):
         self.clicked.connect(self.next_color)
 
     def update_color(self):
-
         letter, rgb = self.COLORS[self.index]
         self.letter = letter
+
         self.setStyleSheet(f"""
             QPushButton {{
                 background-color: {rgb};
@@ -70,12 +71,15 @@ class ColorSquare(QPushButton):
     def get_color(self):
         return self.letter
 
+
 class FaceWidget(QWidget):
+
     def __init__(self, center_color, square_size=50, spacing=4):
         super().__init__()
 
         self.square_size = square_size
         self.spacing = spacing
+
         total_size = square_size * 3 + spacing * 2
         self.setFixedSize(total_size, total_size)
 
@@ -89,24 +93,51 @@ class FaceWidget(QWidget):
 
         for i in range(3):
             row = []
+
             for j in range(3):
                 square = ColorSquare(center_color, square_size)
+
                 if i == 1 and j == 1:
                     square.setEnabled(False)
+
                 layout.addWidget(square, i, j)
                 row.append(square)
+
             self.squares.append(row)
 
         self.setLayout(layout)
 
     def get_face(self):
         result = []
+
         for row in self.squares:
             r = []
+
             for cell in row:
                 r.append(cell.get_color())
+
             result.append(r)
+
         return result
+
+
+class SerialReader(QThread):
+
+    line_received = pyqtSignal(str)
+
+    def __init__(self, esp):
+        super().__init__()
+        self.esp = esp
+
+    def run(self):
+        while not self.isInterruptionRequested():
+            line = self.esp.readline().decode(
+                "utf-8", errors="replace"
+            ).strip()
+
+            if line:
+                self.line_received.emit(line)
+
 
 class MainWindow(QMainWindow):
 
@@ -116,8 +147,12 @@ class MainWindow(QMainWindow):
         self.esp = serial.Serial("COM5", 115200, timeout=2)
         time.sleep(2)
         self.esp.reset_input_buffer()
+
+        self.busy = False
+
         self.setWindowTitle("Rubik Cube Solver")
         self.resize(1400, 800)
+
         self.seconds = 0
 
         central = QWidget()
@@ -149,11 +184,14 @@ class MainWindow(QMainWindow):
         SQUARE_SIZE = 50
         SPACING = 4
         FACE_SPACING = 6
+
         face_size = SQUARE_SIZE * 3 + SPACING * 2
+
         cubeContainer = QWidget()
 
         total_width = face_size * 4 + FACE_SPACING * 3
         total_height = face_size * 3 + FACE_SPACING * 2
+
         cubeContainer.setFixedSize(total_width, total_height)
 
         cubeLayout = QGridLayout()
@@ -161,6 +199,7 @@ class MainWindow(QMainWindow):
         cubeLayout.setHorizontalSpacing(FACE_SPACING)
         cubeLayout.setVerticalSpacing(FACE_SPACING)
         cubeLayout.setContentsMargins(0, 0, 0, 0)
+
         cubeContainer.setLayout(cubeLayout)
 
         self.faceU = FaceWidget("W", SQUARE_SIZE, SPACING)
@@ -179,22 +218,25 @@ class MainWindow(QMainWindow):
 
         left.addWidget(cubeContainer, alignment=Qt.AlignCenter)
 
+        # Кнопки основного управления
         buttons = QHBoxLayout()
         left.addLayout(buttons)
 
-        self.scanButton = QPushButton("Scan")
-        self.solveButton = QPushButton("Solve")
-        self.scrambleButton = QPushButton("Scramble")
-        self.resetButton = QPushButton("Reset")
+        self.scanButton = QPushButton("Сканировать")
+        self.solveButton = QPushButton("Собрать")
+        self.scrambleButton = QPushButton("Перемешать")
 
-        buttonsList = [self.scanButton, self.solveButton,
-                       self.scrambleButton, self.resetButton]
+        buttonsList = [
+            self.scanButton,
+            self.solveButton,
+            self.scrambleButton
+        ]
 
         for button in buttonsList:
             button.setMinimumHeight(45)
             button.setMinimumWidth(140)
             button.setStyleSheet("""
-                QPushButton{
+                QPushButton {
                     font-size:18px;
                 }
             """)
@@ -202,7 +244,25 @@ class MainWindow(QMainWindow):
         buttons.addWidget(self.scanButton)
         buttons.addWidget(self.solveButton)
         buttons.addWidget(self.scrambleButton)
-        buttons.addWidget(self.resetButton)
+
+        # Кнопки управления клешнями
+        clawButtons = QHBoxLayout()
+        left.addLayout(clawButtons)
+
+        self.openButton = QPushButton("Открыть клешни")
+        self.closeButton = QPushButton("Закрыть клешни")
+
+        for button in [self.openButton, self.closeButton]:
+            button.setMinimumHeight(45)
+            button.setMinimumWidth(180)
+            button.setStyleSheet("""
+                QPushButton {
+                    font-size:18px;
+                }
+            """)
+
+        clawButtons.addWidget(self.openButton)
+        clawButtons.addWidget(self.closeButton)
 
         right = QVBoxLayout()
         right.setContentsMargins(20, 20, 20, 20)
@@ -210,7 +270,7 @@ class MainWindow(QMainWindow):
 
         root.addLayout(right, 1)
 
-        self.scrambleLabel = QLabel("Scramble:")
+        self.scrambleLabel = QLabel("Перемешивание:")
         self.scrambleLabel.setStyleSheet("font-size:20px;")
         right.addWidget(self.scrambleLabel)
 
@@ -230,16 +290,49 @@ class MainWindow(QMainWindow):
         self.scanButton.clicked.connect(self.scan)
         self.solveButton.clicked.connect(self.solve)
         self.scrambleButton.clicked.connect(self.scramble)
-        self.resetButton.clicked.connect(self.resetCube)
+
+        self.openButton.clicked.connect(self.openClaws)
+        self.closeButton.clicked.connect(self.closeClaws)
+
+        # Поток чтения сообщений от ESP32
+        self.reader = SerialReader(self.esp)
+        self.reader.line_received.connect(self.handleSerialLine)
+        self.reader.start()
 
     def updateTimer(self):
         self.seconds += 1
+
         minutes = self.seconds // 60
         seconds = self.seconds % 60
+
         self.timerLabel.setText(f"{minutes:02}:{seconds:02}")
+
+    def setBusy(self, busy):
+        self.busy = busy
+
+        self.solveButton.setEnabled(not busy)
+        self.scrambleButton.setEnabled(not busy)
+        self.openButton.setEnabled(not busy)
+        self.closeButton.setEnabled(not busy)
+
+    def handleSerialLine(self, message):
+        print(message)
+
+        if message == "Алгоритм обработан.":
+            self.setBusy(False)
+            self.statusLabel.setText("Готово")
+
+        elif message == "Клешни открыты.":
+            self.setBusy(False)
+            self.statusLabel.setText("Клешни открыты")
+
+        elif message == "Клешни закрыты.":
+            self.setBusy(False)
+            self.statusLabel.setText("Клешни закрыты")
 
     def scan(self):
         self.statusLabel.setText("Сканирование...")
+
         cube = scan_cube()
 
         if cube is not None:
@@ -252,50 +345,85 @@ class MainWindow(QMainWindow):
 
             self.setCube(cube)
             self.statusLabel.setText("Сканирование завершено")
+
         else:
             self.statusLabel.setText("Сканирование отменено")
 
     def solve(self):
+        if self.busy:
+            return
+
         self.statusLabel.setText("Решение...")
+
         self.seconds = 0
         self.timerLabel.setText("00:00")
         self.timer.start(1000)
-        cube = self.getCube()
 
+        cube = self.getCube()
         solution = solve_cube(cube)
+
         self.moveLabel.setText(solution)
+
         if not solution.startswith("Ошибка:"):
+            self.setBusy(True)
+            self.statusLabel.setText("Сборка...")
+
             self.esp.write((solution + "\n").encode("utf-8"))
             self.esp.flush()
-            print(self.esp.readline().decode("utf-8").strip(), end = ' ')
-            print(self.esp.readline().decode("utf-8").strip())
-        self.statusLabel.setText("Готово")
+
+        else:
+            self.statusLabel.setText("Ошибка")
 
     def scramble(self):
-        moves = ["R", "L", "U", "D", "F", "B",
-                "R'", "L'", "U'", "D'", "F'", "B'"]
+        if self.busy:
+            return
+
+        moves = [
+            "R", "L", "U", "D", "F", "B",
+            "R'", "L'", "U'", "D'", "F'", "B'"
+        ]
+
         sequence = []
         last = ""
 
         for _ in range(25):
             move = random.choice(moves)
+
             while move[0] == last:
                 move = random.choice(moves)
+
             sequence.append(move)
             last = move[0]
+
         result = " ".join(sequence)
 
-        self.scrambleLabel.setText("Scramble: " + result)
+        self.scrambleLabel.setText("Перемешивание: " + result)
+
+        self.setBusy(True)
+        self.statusLabel.setText("Перемешивание...")
+
         self.esp.write((result + "\n").encode("utf-8"))
         self.esp.flush()
-        self.statusLabel.setText("Scramble готов")
 
-    def resetCube(self):
-        self.seconds = 0
-        self.timer.stop()
-        self.timerLabel.setText("00:00")
-        self.statusLabel.setText("Ожидание")
-        self.moveLabel.setText("-")
+    def openClaws(self):
+        if self.busy:
+            return
+
+        self.setBusy(True)
+        self.statusLabel.setText("Открытие клешней...")
+
+        self.esp.write(b"OPEN\n")
+        self.esp.flush()
+
+    def closeClaws(self):
+        if self.busy:
+            return
+
+        self.setBusy(True)
+        self.statusLabel.setText("Закрытие клешней...")
+
+        self.esp.write(b"CLOSE\n")
+        self.esp.flush()
 
     def getCube(self):
         cube = {
@@ -306,6 +434,7 @@ class MainWindow(QMainWindow):
             "L": self.faceL.get_face(),
             "B": self.faceB.get_face()
         }
+
         return cube
 
     def setCube(self, cube):
