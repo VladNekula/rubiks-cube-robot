@@ -319,6 +319,7 @@ class MainWindow(QMainWindow):
         print(message)
 
         if message == "Алгоритм обработан.":
+            self.timer.stop()
             self.setBusy(False)
             self.statusLabel.setText("Готово")
 

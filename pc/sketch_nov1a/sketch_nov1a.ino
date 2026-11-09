@@ -3,15 +3,15 @@
 Servo leftServo[2];   // [0] поворот, [1] зажим
 Servo rightServo[2];  // [0] поворот, [1] зажим
 
-const int leftPins[2]  = {17, 18};
-const int rightPins[2] = {19, 21};
+const int leftPins[2]  = {16, 18};
+const int rightPins[2] = {15, 17};
 
 const int CENTER = 90;
 const int TURN_CW = 180;
 const int TURN_CCW = 0;
 
 const int OPEN_ANGLE = 180;
-const int CLOSE_ANGLE = 160;
+const int CLOSE_ANGLE = 170; //135
 
 int leftAngle[2]  = {CENTER, OPEN_ANGLE};
 int rightAngle[2] = {CENTER, OPEN_ANGLE};
@@ -25,11 +25,9 @@ void setup() {
   }
 
   setLeft(0, CENTER);
-  delay(300);
-  setLeft(1, OPEN_ANGLE);
-  delay(300);
   setRight(0, CENTER);
   delay(300);
+  setLeft(1, OPEN_ANGLE);
   setRight(1, OPEN_ANGLE);
   delay(300);
 }
@@ -45,6 +43,9 @@ void loop() {
 
     // Команда открытия клешней
     if (algorithm == "OPEN") {
+      setLeft(0, CENTER);
+      setRight(0, CENTER);
+      delay(150);
       setLeft(1, OPEN_ANGLE);
       setRight(1, OPEN_ANGLE);
       delay(300);
@@ -54,6 +55,9 @@ void loop() {
 
     // Команда закрытия клешней
     if (algorithm == "CLOSE") {
+      setLeft(0, CENTER);
+      setRight(0, CENTER);
+      delay(150);
       setLeft(1, CLOSE_ANGLE);
       setRight(1, CLOSE_ANGLE);
       delay(300);
@@ -100,7 +104,7 @@ void loop() {
         }
       }
 
-      delay(300);
+      //delay(300);
     }
 
     Serial.println("Алгоритм обработан.");
