@@ -86,7 +86,7 @@ def scan_cube():
     cube = {}
 
     for i, face in enumerate(faces):
-        result = scan_face(0, face)
+        result = scan_face(1, face)
         if result is None:
             print("Скан отменён")
             return None

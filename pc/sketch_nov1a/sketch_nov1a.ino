@@ -3,7 +3,7 @@
 Servo leftServo[2];   // [0] поворот, [1] зажим
 Servo rightServo[2];  // [0] поворот, [1] зажим
 
-const int leftPins[2]  = {16, 18};
+const int leftPins[2]  = {22, 18};
 const int rightPins[2] = {15, 17};
 
 const int CENTER = 90;
@@ -11,7 +11,7 @@ const int TURN_CW = 180;
 const int TURN_CCW = 0;
 
 const int OPEN_ANGLE = 180;
-const int CLOSE_ANGLE = 170; //135
+const int CLOSE_ANGLE = 142; //135
 
 int leftAngle[2]  = {CENTER, OPEN_ANGLE};
 int rightAngle[2] = {CENTER, OPEN_ANGLE};
@@ -26,10 +26,10 @@ void setup() {
 
   setLeft(0, CENTER);
   setRight(0, CENTER);
-  delay(300);
+  delay(700);
   setLeft(1, OPEN_ANGLE);
   setRight(1, OPEN_ANGLE);
-  delay(300);
+  delay(700);
 }
 
 void loop() {
@@ -48,7 +48,7 @@ void loop() {
       delay(150);
       setLeft(1, OPEN_ANGLE);
       setRight(1, OPEN_ANGLE);
-      delay(300);
+      delay(700);
       Serial.println("Клешни открыты.");
       return;
     }
@@ -60,7 +60,7 @@ void loop() {
       delay(150);
       setLeft(1, CLOSE_ANGLE);
       setRight(1, CLOSE_ANGLE);
-      delay(300);
+      delay(700);
       Serial.println("Клешни закрыты.");
       return;
     }
@@ -104,7 +104,7 @@ void loop() {
         }
       }
 
-      //delay(300);
+      //delay(700);
     }
 
     Serial.println("Алгоритм обработан.");
@@ -112,13 +112,13 @@ void loop() {
 }
 
 void setLeft(int number, int angle) {
-  int minAngle = (number == 0) ? 0 : 160;
+  int minAngle = (number == 0) ? 0 : CLOSE_ANGLE;
   leftAngle[number] = constrain(angle, minAngle, 180);
   leftServo[number].write(leftAngle[number]);
 }
 
 void setRight(int number, int angle) {
-  int minAngle = (number == 0) ? 0 : 160;
+  int minAngle = (number == 0) ? 0 : CLOSE_ANGLE;
   rightAngle[number] = constrain(angle, minAngle, 180);
   rightServo[number].write(rightAngle[number]);
 }
@@ -129,21 +129,21 @@ void turn_CW_or_CCW_Left(bool CW) {
   if (CW) {
     angle = TURN_CW;
     setRight(1, OPEN_ANGLE);
-    delay(300);
+    delay(700);
   } else {
     angle = TURN_CCW;
   }
 
   setLeft(0, angle);
-  delay(300);
+  delay(700);
   setRight(1, CLOSE_ANGLE);
-  delay(300);
+  delay(700);
   setLeft(1, OPEN_ANGLE);
-  delay(300);
+  delay(700);
   setLeft(0, CENTER);
-  delay(300);
+  delay(700);
   setLeft(1, CLOSE_ANGLE);
-  delay(300);
+  delay(700);
 }
 
 void turn_CW_or_CCW_Right(bool CW) {
@@ -152,53 +152,53 @@ void turn_CW_or_CCW_Right(bool CW) {
   if (CW) {
     angle = TURN_CW;
     setLeft(1, OPEN_ANGLE);
-    delay(300);
+    delay(700);
   } else {
     angle = TURN_CCW;
   }
 
   setRight(0, angle);
-  delay(300);
+  delay(700);
   setLeft(1, CLOSE_ANGLE);
-  delay(300);
+  delay(700);
   setRight(1, OPEN_ANGLE);
-  delay(300);
+  delay(700);
   setRight(0, CENTER);
-  delay(300);
+  delay(700);
   setRight(1, CLOSE_ANGLE);
-  delay(300);
+  delay(700);
 }
 
 void turn_and_return_Right(int turnAngle) {
   setRight(0, turnAngle);
-  delay(300);
+  delay(700);
   setRight(1, OPEN_ANGLE);
-  delay(300);
+  delay(700);
   setRight(0, CENTER);
-  delay(300);
+  delay(700);
 }
 
 void turn_and_return_Left(int turnAngle) {
   setLeft(0, turnAngle);
-  delay(300);
+  delay(700);
   setLeft(1, OPEN_ANGLE);
-  delay(300);
+  delay(700);
   setLeft(0, CENTER);
-  delay(300);
+  delay(700);
 }
 
 void turnLeft(bool reverse) {
   int turnAngle = reverse ? TURN_CCW : TURN_CW;
   turn_and_return_Left(turnAngle);
   setLeft(1, CLOSE_ANGLE);
-  delay(300);
+  delay(700);
 }
 
 void turnDown(bool reverse) {
   int turnAngle = reverse ? TURN_CCW : TURN_CW;
   turn_and_return_Right(turnAngle);
   setRight(1, CLOSE_ANGLE);
-  delay(300);
+  delay(700);
 }
 
 void turnFront(bool reverse) {
@@ -225,7 +225,7 @@ void turnUp(bool reverse) {
 
   turn_CW_or_CCW_Left(false);
   setRight(1, OPEN_ANGLE);
-  delay(300);
+  delay(700);
   turn_CW_or_CCW_Left(false);
 }
 
@@ -239,6 +239,6 @@ void turnRight(bool reverse) {
 
   turn_CW_or_CCW_Right(false);
   setLeft(1, OPEN_ANGLE);
-  delay(300);
+  delay(700);
   turn_CW_or_CCW_Right(false);
 }

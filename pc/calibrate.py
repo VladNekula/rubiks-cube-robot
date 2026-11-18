@@ -32,7 +32,7 @@ def mouse_callback(event, x, y, flags, param):
             print(f"S: {s_min} - {s_max}")
             print(f"V: {v_min} - {v_max}")
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
 cv2.namedWindow("frame")
 cv2.setMouseCallback("frame", mouse_callback)
